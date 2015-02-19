@@ -216,7 +216,7 @@ public class MonitorTest {
   @Test
   public void fail_to_start_if_bad_class_name() throws Exception {
     monitor = newDefaultMonitor();
-    JavaCommand command = new JavaCommand("test")
+    JavaCommand command = new JavaCommand("test", 3)
       .addClasspath(testJar.getAbsolutePath())
       .setClassName("org.sonar.process.test.Unknown")
       .setTempDir(temp.newFolder());
@@ -257,7 +257,7 @@ public class MonitorTest {
     }
 
     JavaCommand newCommand() throws IOException {
-      return new JavaCommand(commandKey)
+      return new JavaCommand(commandKey, 4)
         .addClasspath(testJar.getAbsolutePath())
         .setClassName("org.sonar.process.test.HttpProcess")
         .setArgument("httpPort", String.valueOf(httpPort))
@@ -328,7 +328,7 @@ public class MonitorTest {
   }
 
   private JavaCommand newStandardProcessCommand() throws IOException {
-    return new JavaCommand("standard")
+    return new JavaCommand("standard", 1)
       .addClasspath(testJar.getAbsolutePath())
       .setClassName("org.sonar.process.test.StandardProcess")
       .setTempDir(temp.newFolder());

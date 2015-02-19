@@ -56,7 +56,7 @@ public class App implements Stoppable {
     if (props.valueAsBoolean(ProcessConstants.ENABLE_STOP_COMMAND, false)) {
       // stop application when file <temp>/app.stop is created
       File tempDir = props.nonNullValueAsFile(ProcessConstants.PATH_TEMP);
-      ProcessCommands commands = new ProcessCommands(tempDir, "app");
+      ProcessCommands commands = new ProcessCommands(tempDir, 1);
       stopWatcher = new StopWatcher(commands, this);
       stopWatcher.start();
     }
@@ -68,7 +68,7 @@ public class App implements Stoppable {
     List<JavaCommand> commands = new ArrayList<>();
     File homeDir = props.nonNullValueAsFile(ProcessConstants.PATH_HOME);
     File tempDir = props.nonNullValueAsFile(ProcessConstants.PATH_TEMP);
-    JavaCommand elasticsearch = new JavaCommand("search");
+    JavaCommand elasticsearch = new JavaCommand("search", 2);
     elasticsearch
       .setWorkDir(homeDir)
       .addJavaOptions("-Djava.awt.headless=true")
@@ -83,7 +83,7 @@ public class App implements Stoppable {
 
     // do not yet start SQ on elasticsearch slaves
     if (StringUtils.isBlank(props.value(ProcessConstants.CLUSTER_MASTER_HOST))) {
-      JavaCommand webServer = new JavaCommand("web")
+      JavaCommand webServer = new JavaCommand("web", 3)
         .setWorkDir(homeDir)
         .addJavaOptions(DefaultSettings.WEB_SERVER_FORCED_JVM_ARGS)
         .addJavaOptions(props.nonNullValue(ProcessConstants.WEB_JAVA_OPTS))

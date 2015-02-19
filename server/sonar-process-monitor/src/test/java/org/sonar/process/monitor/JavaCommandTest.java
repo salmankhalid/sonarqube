@@ -35,7 +35,7 @@ public class JavaCommandTest {
 
   @Test
   public void test_parameters() throws Exception {
-    JavaCommand command = new JavaCommand("es");
+    JavaCommand command = new JavaCommand("es", 1);
 
     command.setArgument("first_arg", "val1");
     Properties args = new Properties();
@@ -66,7 +66,7 @@ public class JavaCommandTest {
 
   @Test
   public void add_java_options() throws Exception {
-    JavaCommand command = new JavaCommand("foo");
+    JavaCommand command = new JavaCommand("foo", 2);
     assertThat(command.getJavaOptions()).isEmpty();
 
     command.addJavaOptions("");

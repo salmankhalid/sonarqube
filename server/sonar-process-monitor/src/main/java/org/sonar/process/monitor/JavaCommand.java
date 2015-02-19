@@ -38,6 +38,8 @@ public class JavaCommand {
 
   private File workDir;
 
+  private int index;
+
   // for example -Xmx1G
   private final List<String> javaOptions = new ArrayList<String>();
 
@@ -54,12 +56,17 @@ public class JavaCommand {
 
   private File tempDir = null;
 
-  public JavaCommand(String key) {
+  public JavaCommand(String key, int index) {
     this.key = key;
+    this.index = index;
   }
 
   public String getKey() {
     return key;
+  }
+
+  public int getIndex() {
+    return index;
   }
 
   public File getWorkDir() {
