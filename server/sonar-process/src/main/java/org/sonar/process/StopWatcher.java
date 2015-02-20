@@ -46,7 +46,6 @@ public class StopWatcher extends Thread {
   @Override
   public void run() {
     while (watching) {
-      commands.ping();
       if (commands.askedForStop()) {
         LoggerFactory.getLogger(getClass()).info("Stopping process");
         stoppable.stopAsync();
