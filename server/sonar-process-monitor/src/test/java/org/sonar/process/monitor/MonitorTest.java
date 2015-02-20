@@ -29,6 +29,7 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.rules.Timeout;
 import org.sonar.process.NetworkUtils;
 import org.sonar.process.Lifecycle.State;
+import org.sonar.process.ProcessCommands;
 import org.sonar.process.SystemExit;
 
 import java.io.File;
@@ -209,6 +210,18 @@ public class MonitorTest {
   }
 
   @Test
+  public void test_too_many_processes() {
+    while (Monitor.getNextProcessId() < ProcessCommands.getMaxProcesses() - 1) {}
+    try {
+      newDefaultMonitor();
+    } catch (IllegalStateException e) {
+      assertThat(e).hasMessageStartingWith("The maximum number of processes launched has been reached ");
+    } finally {
+      Monitor.nextProcessId = KnownJavaCommand.getFirstIndexAvailable();
+    }
+  }
+
+  @Test
   public void force_stop_if_too_long() throws Exception {
     // TODO
   }
@@ -216,7 +229,7 @@ public class MonitorTest {
   @Test
   public void fail_to_start_if_bad_class_name() throws Exception {
     monitor = newDefaultMonitor();
-    JavaCommand command = new JavaCommand("test", 3)
+    JavaCommand command = new JavaCommand("test")
       .addClasspath(testJar.getAbsolutePath())
       .setClassName("org.sonar.process.test.Unknown")
       .setTempDir(temp.newFolder());
@@ -257,7 +270,7 @@ public class MonitorTest {
     }
 
     JavaCommand newCommand() throws IOException {
-      return new JavaCommand(commandKey, 4)
+      return new JavaCommand(commandKey)
         .addClasspath(testJar.getAbsolutePath())
         .setClassName("org.sonar.process.test.HttpProcess")
         .setArgument("httpPort", String.valueOf(httpPort))
@@ -328,7 +341,7 @@ public class MonitorTest {
   }
 
   private JavaCommand newStandardProcessCommand() throws IOException {
-    return new JavaCommand("standard", 1)
+    return new JavaCommand("standard")
       .addClasspath(testJar.getAbsolutePath())
       .setClassName("org.sonar.process.test.StandardProcess")
       .setTempDir(temp.newFolder());

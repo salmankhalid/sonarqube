@@ -21,14 +21,9 @@ package org.sonar.application;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
-import org.sonar.process.MinimumViableSystem;
-import org.sonar.process.ProcessCommands;
-import org.sonar.process.ProcessConstants;
-import org.sonar.process.ProcessLogging;
-import org.sonar.process.Props;
-import org.sonar.process.StopWatcher;
-import org.sonar.process.Stoppable;
+import org.sonar.process.*;
 import org.sonar.process.monitor.JavaCommand;
+import org.sonar.process.monitor.KnownJavaCommand;
 import org.sonar.process.monitor.Monitor;
 
 import java.io.File;
@@ -56,7 +51,7 @@ public class App implements Stoppable {
     if (props.valueAsBoolean(ProcessConstants.ENABLE_STOP_COMMAND, false)) {
       // stop application when file <temp>/app.stop is created
       File tempDir = props.nonNullValueAsFile(ProcessConstants.PATH_TEMP);
-      ProcessCommands commands = new ProcessCommands(tempDir, 1);
+      ProcessCommands commands = new ProcessCommands(tempDir, KnownJavaCommand.APP.getIndex());
       stopWatcher = new StopWatcher(commands, this);
       stopWatcher.start();
     }
@@ -68,7 +63,7 @@ public class App implements Stoppable {
     List<JavaCommand> commands = new ArrayList<>();
     File homeDir = props.nonNullValueAsFile(ProcessConstants.PATH_HOME);
     File tempDir = props.nonNullValueAsFile(ProcessConstants.PATH_TEMP);
-    JavaCommand elasticsearch = new JavaCommand("search", 2);
+    JavaCommand elasticsearch = new JavaCommand("search");
     elasticsearch
       .setWorkDir(homeDir)
       .addJavaOptions("-Djava.awt.headless=true")
@@ -83,7 +78,7 @@ public class App implements Stoppable {
 
     // do not yet start SQ on elasticsearch slaves
     if (StringUtils.isBlank(props.value(ProcessConstants.CLUSTER_MASTER_HOST))) {
-      JavaCommand webServer = new JavaCommand("web", 3)
+      JavaCommand webServer = new JavaCommand("web")
         .setWorkDir(homeDir)
         .addJavaOptions(DefaultSettings.WEB_SERVER_FORCED_JVM_ARGS)
         .addJavaOptions(props.nonNullValue(ProcessConstants.WEB_JAVA_OPTS))

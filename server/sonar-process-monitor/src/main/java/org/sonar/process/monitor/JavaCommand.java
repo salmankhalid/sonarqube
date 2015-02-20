@@ -38,8 +38,6 @@ public class JavaCommand {
 
   private File workDir;
 
-  private int index;
-
   // for example -Xmx1G
   private final List<String> javaOptions = new ArrayList<String>();
 
@@ -56,17 +54,22 @@ public class JavaCommand {
 
   private File tempDir = null;
 
-  public JavaCommand(String key, int index) {
+  private int processIndex = -1;
+
+  public JavaCommand(String key) {
     this.key = key;
-    this.index = index;
+    processIndex = KnownJavaCommand.lookIndexFor(key);
+    if (processIndex == -1) {
+      processIndex = Monitor.getNextProcessId();
+    }
   }
 
   public String getKey() {
     return key;
   }
 
-  public int getIndex() {
-    return index;
+  public int getProcessIndex() {
+    return processIndex;
   }
 
   public File getWorkDir() {

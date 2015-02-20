@@ -19,6 +19,8 @@
  */
 package org.sonar.process;
 
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -43,7 +45,7 @@ import java.nio.channels.FileChannel;
  */
 public class ProcessCommands {
 
-  private final RandomAccessFile sharedmemory;
+  private final RandomAccessFile sharedmemory; // We need to keep a reference to this variable to prevent it to be garbage collected
   /**
    * The ByteBuffer will contains :
    * <ul>
@@ -52,7 +54,8 @@ public class ProcessCommands {
    * </ul>
    */
   final MappedByteBuffer mappedByteBuffer;
-  private static final Integer MAX_SHARED_MEMORY = 1 + 9 * 10; // We this shared memory we can handle up to 10 processes (91 bytes)
+  private static final int MAX_PROCESSES = 50;
+  private static final int MAX_SHARED_MEMORY = 1 + 9 * MAX_PROCESSES; // With this shared memory we can handle up to MAX_PROCESSES processes
   public static final byte STOP = (byte) 0xFF;
   public static final byte READY = (byte) 0x01;
   public static final byte EMPTY = (byte) 0x00;
@@ -60,13 +63,17 @@ public class ProcessCommands {
   private int processNumber;
 
   public ProcessCommands(File directory, int processNumber) {
+    // processNumber should not excess MAX_PROCESSES and must not be below -1
+    assert processNumber <= MAX_PROCESSES : "Incorrect process number";
+    assert processNumber >= -1 : "Incorrect process number";
+
     this.processNumber = processNumber;
     if (!directory.isDirectory() || !directory.exists()) {
       throw new IllegalArgumentException("Not a valid directory: " + directory);
     }
 
     try {
-      sharedmemory = new RandomAccessFile(new File(directory, "sharedmemory"), "rw" );
+      sharedmemory = new RandomAccessFile(new File(directory, "sharedmemory"), "rw");
       mappedByteBuffer = sharedmemory.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, MAX_SHARED_MEMORY);
     } catch (IOException e) {
       throw new IllegalArgumentException("Unable to create shared memory : ", e);
@@ -74,22 +81,30 @@ public class ProcessCommands {
   }
 
   public boolean isReady() {
-    return mappedByteBuffer.get(offset()) == READY;
+    return canBeMonitored() && mappedByteBuffer.get(offset()) == READY;
   }
 
   /**
    * To be executed by child process to declare that it's ready
    */
   public void setReady() {
-    mappedByteBuffer.put(offset(), READY);
+    if (canBeMonitored()) {
+      mappedByteBuffer.put(offset(), READY);
+    }
   }
 
   public void ping() {
-    mappedByteBuffer.putLong(1 + offset(), System.currentTimeMillis());
+    if (canBeMonitored()) {
+      mappedByteBuffer.putLong(1 + offset(), System.currentTimeMillis());
+    }
   }
 
   public long getLastPing() {
-    return mappedByteBuffer.getLong(1 + offset());
+    if (canBeMonitored()) {
+      return mappedByteBuffer.getLong(1 + offset());
+    } else {
+      return -1;
+    }
   }
 
   /**
@@ -107,7 +122,15 @@ public class ProcessCommands {
     return 1 + 9 * processNumber;
   }
 
-  public int getProcessNumber() {
-    return processNumber;
+  private boolean canBeMonitored() {
+    boolean result = processNumber >= 0 && processNumber < MAX_PROCESSES;
+    if (!result) {
+      LoggerFactory.getLogger(getClass()).info("This process cannot be monitored. Process Id : [{}]", processNumber);
+    }
+    return result;
+  }
+
+  public static final int getMaxProcesses() {
+    return MAX_PROCESSES;
   }
 }

@@ -27,6 +27,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
 import static org.junit.Assert.fail;
 
 public class ProcessCommandsTest {
@@ -77,5 +78,22 @@ public class ProcessCommandsTest {
     commands.askForStop();
     assertThat(commands.askedForStop()).isTrue();
     assertThat(commands.mappedByteBuffer.get(0)).isEqualTo(ProcessCommands.STOP);
+  }
+
+  @Test
+  public void test_max_processes() throws Exception {
+    File dir = temp.newFolder();
+    try {
+      new ProcessCommands(dir, -2);
+      failBecauseExceptionWasNotThrown(AssertionError.class);
+    } catch (AssertionError e) {
+      assertThat(e).hasMessage("Incorrect process number");
+    }
+    try {
+      new ProcessCommands(dir, ProcessCommands.getMaxProcesses() + 1);
+      failBecauseExceptionWasNotThrown(AssertionError.class);
+    } catch (AssertionError e) {
+      assertThat(e).hasMessage("Incorrect process number");
+    }
   }
 }
